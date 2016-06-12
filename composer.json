@@ -1,0 +1,6 @@
+{
+    "require": {
+        "kasp3r/link-preview": "^1.2",
+        "microweber/screen": "^1.0"
+    }
+}
