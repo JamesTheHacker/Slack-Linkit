@@ -164,7 +164,7 @@ function linkit() {
      
     // Return some shit to slack ...
     $permalink = get_permalink($postID);
-    channelMessage($_POST['response_url'], "Saved: {$permalink}");
+    channelResponse($_POST['response_url'], "Saved: {$permalink}");
 };
 
 add_action('admin_post_linkit', 'linkit');
