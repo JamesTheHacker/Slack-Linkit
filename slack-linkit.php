@@ -16,7 +16,7 @@ use Screen\Capture;
  * Configuration
  * TODO: Create admin options page to set these values.
  */
-define('SLACK_TOKEN', '');
+define('SLACK_TOKEN', $_ENV["SLACK_TOKEN"]);
 define('PHANTOM_PATH', '/usr/bin/');        // Include trailing slash!
 define('DEFAULT_CATEGORY', 'Slack Links');  // Category to post all links under
 define('DEFAULT_USER', 0);                  // The user ID of user to be listed as author for all links. Default: 0 (admin)
