@@ -199,7 +199,7 @@ function linkit() {
     $permalink = get_permalink($postID);
     $msg = $successMessages[array_rand($successMessages)];
 
-    channelMessage($_POST['response_url'], "{$msg} {$permalink}")
+    channelMessage($_POST['response_url'], "{$msg} {$permalink}");
 };
 
 add_action('admin_post_linkit', 'linkit');
