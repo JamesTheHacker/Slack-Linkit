@@ -16,7 +16,7 @@ use Screen\Capture;
  * Configuration
  * TODO: Create admin options page to set these values.
  */
-define('SLACK_TOKEN', $_ENV["SLACK_TOKEN"]);
+define('SLACK_TOKEN', '');
 define('PHANTOM_PATH', '/usr/bin/');        // Include trailing slash!
 define('DEFAULT_CATEGORY', 'Slack Links');  // Category to post all links under
 define('DEFAULT_USER', 0);                  // The user ID of user to be listed as author for all links. Default: 0 (admin)
@@ -27,30 +27,7 @@ define('NO_PERMISSIONS_MESSAGE', 'You must be be registered to use LikeIt. Join 
  */
 $allowedUsers = array(
     'admin',
-    'jamesthehacker' // I IZ IN ALL UR MASHINEZ ┌∩┐(◣_◢)┌∩┐
-);
-
-/*
- * When shit hits the fan pick a random joke from below ...
- */
-$jokes = array(
-    'Do you expect me to pull this out of my ass? That webpage does not exist!',
-    'What is next to ecstasy? Pain. What is next to pain. Nothingness.',
-    'We can regard our life as a uselessly disturbing episode in the blissful repose of nothingness.',
-    'Absolute equals nothingness.',
-    'Trump is an ass.',
-    'Are you seriously trying to piss me off?',
-    'Keep going. Time has no meaning to me, but your clock is ticking.'
-);
-
-/*
- * If everything goes to plan pick a random success message from below ...
- */
-$successMessages = array(
-    'Saved: ',
-    'Saved ...',
-    'Added: ',
-    'Added ...'
+    'jamesthehacker'
 );
 
 /*
@@ -59,6 +36,7 @@ $successMessages = array(
 function screenshot($url, $savePath, $filename) {
     $screenCapture = new Capture($url);
     $screenCapture->setHeight(400);
+    $screenCapture->setUserAgentString('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:47.0) Gecko/20100101 Firefox/47.0');
     $screenCapture->output->setLocation($savePath);
     $screenCapture->binPath = PHANTOM_PATH;
     $screenCapture->save($filename);
@@ -73,14 +51,6 @@ function categoryID($category) {
         return get_cat_ID($category);
     else
         return wp_create_category($category);
-}
-
-/*
- * Pick a random joke and pass it to Slack
- */
-function joke() {
-    global $jokes; // Trust me, this makes me cringe too. In this context it's ok.
-    return print($jokes[array_rand($jokes)]);
 }
 
 /*
@@ -136,7 +106,7 @@ function linkit() {
 
         // Check if the URL is valid
         if(filter_var($url, FILTER_VALIDATE_URL) === false)
-            return joke();
+            return print "Invalid URL: {$url}";
 
         // Fetch the category ID to post the link under
         $categoryID = categoryID(DEFAULT_CATEGORY);
@@ -150,12 +120,12 @@ function linkit() {
             // Catching general exceptions is badda than a m'urfuka!
             // This will generally fail if a domain name doesn't exist. If it fails for any other reason ... fuck it.
             // TODO: Logging!
-            return joke();
+            return print $e->getMessage();
         }
 
         // If there's no page title, and description, ignore it. Tell a joke.
         if(!$preview->getTitle() && !$preview->getDescription())
-            return joke();
+            return print "Page has no title or description: {$url}";
  
         $title = esc_html(parse_url($url)['host'] . ' - ' . $preview->getTitle());
         $description = esc_html($preview->getDescription());
@@ -194,9 +164,7 @@ function linkit() {
      
     // Return some shit to slack ...
     $permalink = get_permalink($postID);
-    $msg = $successMessages[array_rand($successMessages)];
-
-    channelMessage($_POST['response_url'], "{$msg} {$permalink}");
+    channelMessage($_POST['response_url'], "Saved: {$permalink}");
 };
 
 add_action('admin_post_linkit', 'linkit');
