@@ -20,6 +20,7 @@ define('SLACK_TOKEN', '');
 define('PHANTOM_PATH', '/usr/bin/');        // Include trailing slash!
 define('DEFAULT_CATEGORY', 'Slack Links');  // Category to post all links under
 define('DEFAULT_USER', 0);                  // The user ID of user to be listed as author for all links. Default: 0 (admin)
+define('NO_PERMISSIONS_MESSAGE', 'You must be be registered to use LikeIt. Join #bot to request access.');
 
 /*
  * Array of Slack members who can use the /linkit slash command
@@ -60,6 +61,7 @@ $successMessages = array(
  */
 function screenshot($url, $savePath, $filename) {
     $screenCapture = new Capture($url);
+    $screenCapture->setHeight(400);
     $screenCapture->output->setLocation($savePath);
     $screenCapture->binPath = PHANTOM_PATH;
     $screenCapture->save($filename);
@@ -82,6 +84,23 @@ function categoryID($category) {
 function joke() {
     global $jokes; // Trust me, this makes me cringe too. In this context it's ok.
     return print($jokes[array_rand($jokes)]);
+}
+
+/*
+ * Display responses in public
+ */
+function channelResponse($url, $text) {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+    curl_setopt($ch, CURLOPT_POSTFIELDS, 'payload=' . json_encode(array(
+        "response_type" => "in_channel",
+        "text" => $text,
+    )));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $result = curl_exec($ch);
+    curl_close($ch);
+
+    return $result;
 }
 
 /*
@@ -110,7 +129,7 @@ function linkit() {
 
         // Check to see if user has permissions to use /linkit. If not do nothing.
         if(!isset($_POST['user_name']) || !in_array(strtolower($_POST['user_name']), $allowedUsers))
-            return;
+            return channelResponse($_POST['response_url'], NO_PERMISSIONS_ERROR);
 
         // In this context text should be the URL to link. If it's not present, do nothing.
         if(!isset($_POST['text']) || empty($_POST['text']))
@@ -180,15 +199,7 @@ function linkit() {
     $permalink = get_permalink($postID);
     $msg = $successMessages[array_rand($successMessages)];
 
-    $ch = curl_init($_POST['response_url']);
-    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-    curl_setopt($ch, CURLOPT_POSTFIELDS, 'payload=' . json_encode(array(
-        "response_type" => "in_channel",
-        "text" => "{$msg} {$permalink}",
-    )));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $result = curl_exec($ch);
-    curl_close($ch);
+    channelMessage($_POST['response_url'], "{$msg} {$permalink}")
 };
 
 add_action('admin_post_linkit', 'linkit');
