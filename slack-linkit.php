@@ -34,11 +34,11 @@ $allowedUsers = array(
  * When shit hits the fan pick a random joke from below ...
  */
 $jokes = array(
-    'Do you expect me to pull this shit out of my ass? That webpage does not exist!',
+    'Do you expect me to pull this out of my ass? That webpage does not exist!',
     'What is next to ecstasy? Pain. What is next to pain. Nothingness.',
     'We can regard our life as a uselessly disturbing episode in the blissful repose of nothingness.',
     'Absolute equals nothingness.',
-    'Trump is an asshole.',
+    'Trump is an ass.',
     'Are you seriously trying to piss me off?',
     'Keep going. Time has no meaning to me, but your clock is ticking.'
 );
@@ -47,13 +47,10 @@ $jokes = array(
  * If everything goes to plan pick a random success message from below ...
  */
 $successMessages = array(
-    'Roger that!',
-    'I broke into the database and added your link ...',
-    'All done:',
-    'Sorry I took so long, had to poop some bits. Saved!',
-    'Smile, things could be worse. Saved!',
-    'Saved',
-    'S4V3D ...',
+    'Saved: ',
+    'Saved ...',
+    'Added: ',
+    'Added ...'
 );
 
 /*
