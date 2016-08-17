@@ -36,8 +36,7 @@ One of the dependencies is bundled with a copy of PhantomJS. We need to make it 
     
 Finally we need to make a couple of folders writable:
 
-    chmod 755 vendor/microweber/scree/jobs
-    chmod 755 -R ../../uploads
+    chmod 755 vendor/microweber/screen/jobs
 
 Enable the plugin in the Wordpress plugins page
 

@@ -8,6 +8,8 @@
  */
 
 require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/const.php';
+require __DIR__ . '/options.php';
 
 use LinkPreview\LinkPreview;
 use Screen\Capture;
@@ -20,15 +22,8 @@ define('SLACK_TOKEN', '');
 define('PHANTOM_PATH', '/usr/bin/');        // Include trailing slash!
 define('DEFAULT_CATEGORY', 'Slack Links');  // Category to post all links under
 define('DEFAULT_USER', 0);                  // The user ID of user to be listed as author for all links. Default: 0 (admin)
-define('NO_PERMISSIONS_MESSAGE', 'You must be be registered to use LikeIt. Join #bot to request access.');
-
-/*
- * Array of Slack members who can use the /linkit slash command
- */
-$allowedUsers = array(
-    'admin',
-    'jamesthehacker'
-);
+define('DEFAULT_USERAGENT', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:47.0) Gecko/20100101 Firefox/47.0');
+define('NO_PERMISSIONS_ERROR', 'You must be be registered to use LikeIt. Join #bot to request access.');
 
 /*
  * This function will take a screenshot of a webpage and save the image in the Wordpress uploads directory
@@ -36,9 +31,9 @@ $allowedUsers = array(
 function screenshot($url, $savePath, $filename) {
     $screenCapture = new Capture($url);
     $screenCapture->setHeight(400);
-    $screenCapture->setUserAgentString('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:47.0) Gecko/20100101 Firefox/47.0');
+    $screenCapture->setUserAgentString(DEFAULT_USERAGENT);
     $screenCapture->output->setLocation($savePath);
-    $screenCapture->binPath = PHANTOM_PATH;
+    $screenCapture->binPath = get_option('phantomjs-path', PHANTOMJS_PATH);
     $screenCapture->save($filename);
     $screenCapture->jobs->clean();
 }
@@ -66,7 +61,6 @@ function channelResponse($url, $text) {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $result = curl_exec($ch);
     curl_close($ch);
-
     return $result;
 }
 
@@ -81,22 +75,26 @@ function channelResponse($url, $text) {
  */
 function linkit() {
 
-    global $allowedUsers, $successMessages;
-    
+    global $successMessages;
+
     $savePath = wp_upload_dir()['path'];
     $filename = uniqid(rand(), true) . '.jpg';
     $wpUploadURL = wp_upload_dir()['url'] . '/' . $filename;
     $wpUploadDir = $savePath . '/' . $filename;
 
     if($_SERVER['REQUEST_METHOD'] == 'POST') { 
-
-        // If the tokens do not match then absolutely diddly squat!
-        if(!isset($_POST['token']) || $_POST['token'] != SLACK_TOKEN)
-            return;
+        
+        $slackToken = esc_html(get_option('slack-token')); 
+        $allowedUsers = explode("\n", get_option('allowed-users'));
+        $defaultCategory = esc_html(get_option('default-category', DEFAULT_CATEGORY));
 
         // Check to see if user has permissions to use /linkit. If not do nothing.
         if(!isset($_POST['user_name']) || !in_array(strtolower($_POST['user_name']), $allowedUsers))
-            return channelResponse($_POST['response_url'], NO_PERMISSIONS_ERROR);
+            return channelResponse($_POST['response_url'], '@' . $_POST['user_name'] . ' ' . NO_PERMISSIONS_ERROR);
+
+        // If the tokens do not match then absolutely diddly squat!
+        if(!isset($_POST['token']) || $_POST['token'] != $slackToken)
+            return;
 
         // In this context text should be the URL to link. If it's not present, do nothing.
         if(!isset($_POST['text']) || empty($_POST['text']))
@@ -109,7 +107,7 @@ function linkit() {
             return print "Invalid URL: {$url}";
 
         // Fetch the category ID to post the link under
-        $categoryID = categoryID(DEFAULT_CATEGORY);
+        $categoryID = categoryID($defaultCategoru);
 
         // Grab a preview of the link
         $preview = new LinkPreview($url);
